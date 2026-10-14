@@ -1,0 +1,136 @@
+/* ==========================================================
+   style.css — Penyesuaian kustom di luar Tailwind
+   ========================================================== */
+
+html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+body { min-height: 100vh; }
+
+/* ---------- Scrollbar tipis ---------- */
+.thin-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.thin-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+.thin-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+.thin-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Sembunyikan scrollbar untuk deretan chip kategori */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---------- Kartu produk ---------- */
+.product-card {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  animation: fadeUp .28s ease both;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -10px rgba(5, 150, 105, .35);
+  border-color: #6ee7b7;
+}
+
+/* ---------- Efek tekan tombol ---------- */
+.btn-press { transition: transform .1s ease, background-color .15s ease, box-shadow .15s ease, opacity .15s ease; }
+.btn-press:active:not(:disabled) { transform: scale(.96); }
+.btn-press:disabled { cursor: not-allowed; }
+
+/* ---------- Fokus yang jelas (aksesibilitas) ---------- */
+button:focus-visible, input:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, .45);
+  outline-offset: 2px;
+}
+
+/* Hilangkan spinner pada input angka */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* ---------- Item keranjang ---------- */
+.cart-row { animation: slideIn .2s ease both; }
+
+/* ---------- Modal ---------- */
+.modal-backdrop { animation: fadeIn .2s ease both; }
+.modal-pop { animation: popIn .25s cubic-bezier(.2, .9, .3, 1.2) both; }
+
+/* ---------- Toast ---------- */
+.toast { animation: toastIn .25s ease both; }
+.toast.leaving { animation: toastOut .25s ease both; }
+
+/* ---------- Kertas struk ---------- */
+.receipt-paper {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #111827;
+  background: #fff;
+  padding: 18px 16px 22px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, .12);
+  /* tepi bawah bergerigi seperti struk asli */
+  -webkit-mask-image:
+    linear-gradient(#000, #000),
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg);
+  -webkit-mask-size: 100% calc(100% - 8px), 12px 100%;
+  -webkit-mask-position: top, bottom;
+  -webkit-mask-repeat: no-repeat, repeat-x;
+  mask-image:
+    linear-gradient(#000, #000),
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg);
+  mask-size: 100% calc(100% - 8px), 12px 100%;
+  mask-position: top, bottom;
+  mask-repeat: no-repeat, repeat-x;
+  padding-bottom: 28px;
+}
+.receipt-divider { border-top: 1px dashed #6b7280; margin: 8px 0; }
+
+/* ---------- Animasi ---------- */
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn  { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn    { from { opacity: 0; transform: scale(.94) translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes toastIn  { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ==========================================================
+   CETAK — hanya struk yang dicetak
+   ========================================================== */
+@media print {
+  @page { margin: 6mm; }
+
+  html, body { background: #fff !important; overflow: visible !important; }
+
+  /* Sembunyikan semua elemen langsung di body kecuali modal struk */
+  body > *:not(#receipt-modal) { display: none !important; }
+
+  #receipt-modal {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  .receipt-dialog {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-height: none !important;
+    max-width: none !important;
+    width: 80mm !important;
+    margin: 0 auto !important;
+    background: #fff !important;
+    animation: none !important;
+  }
+
+  .receipt-scroll { overflow: visible !important; max-height: none !important; padding: 0 !important; background: #fff !important; }
+
+  .receipt-paper {
+    box-shadow: none !important;
+    padding: 0 !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    font-size: 12px;
+  }
+
+  .no-print { display: none !important; }
+}

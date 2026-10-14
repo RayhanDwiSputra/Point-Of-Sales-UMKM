@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#059669">
+  <title>Kasir Digital — POS UMKM</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 500: '#10b981',
+              600: '#059669', 700: '#047857', 800: '#065f46'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Font Inter & Phosphor Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- CSS kustom -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-slate-100 text-slate-800 font-sans antialiased">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-11 h-11 rounded-xl bg-brand-600 text-white flex items-center justify-center text-2xl shrink-0">
+          <i class="ph ph-storefront"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 id="store-name" class="font-extrabold text-lg leading-tight truncate">Toko Sembako Ojang
+          </h1>
+          <p class="text-xs text-slate-500">Kasir Digital</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:block text-right leading-tight">
+          <p id="clock-time" class="font-bold text-lg tabular-nums">--:--</p>
+          <p id="clock-date" class="text-xs text-slate-500">&nbsp;</p>
+        </div>
+        <!-- Status sinkronisasi n8n (disembunyikan otomatis jika n8n tidak diaktifkan) -->
+        <button id="btn-sync" type="button" class="hidden" aria-live="polite"></button>
+        <button id="btn-history" type="button"
+          class="btn-press min-h-[44px] px-4 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold text-sm flex items-center gap-2">
+          <i class="ph ph-clock-counter-clockwise text-xl"></i>
+          <span class="hidden sm:inline">Riwayat</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== KONTEN UTAMA ===================== -->
+  <main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-5 gap-4 pb-28 lg:pb-4">
+
+    <!-- ---------- KIRI: Katalog Produk ---------- -->
+    <section class="lg:col-span-3 min-w-0">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-4">
+        <label for="search-input" class="sr-only">Cari produk</label>
+        <div class="relative">
+          <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-xl text-slate-400"></i>
+          <input id="search-input" type="search" autocomplete="off" placeholder="Cari produk atau kategori..."
+            class="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-base focus:bg-white focus:border-brand-500">
+        </div>
+
+        <div id="categories" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1" role="tablist" aria-label="Filter kategori"></div>
+      </div>
+
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h2 class="font-bold text-slate-700">Daftar Produk</h2>
+        <span id="product-count" class="text-sm text-slate-500">0 produk</span>
+      </div>
+
+      <div id="products-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+    </section>
+
+    <!-- ---------- KANAN: Keranjang & Pembayaran ---------- -->
+    <aside id="cart-panel" class="lg:col-span-2 min-w-0">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm lg:sticky lg:top-[84px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto thin-scroll">
+
+        <!-- Judul keranjang -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <h2 class="font-bold text-lg flex items-center gap-2">
+            <i class="ph ph-shopping-cart text-brand-600 text-2xl"></i> Keranjang
+            <span id="cart-badge" class="text-xs bg-brand-100 text-brand-700 rounded-full px-2 py-0.5">0</span>
+          </h2>
+          <button id="btn-clear" type="button"
+            class="btn-press min-h-[40px] px-3 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 flex items-center gap-1">
+            <i class="ph ph-trash"></i> Kosongkan
+          </button>
+        </div>
+
+        <!-- Daftar item -->
+        <div id="cart-items" class="px-4 max-h-64 overflow-y-auto thin-scroll"></div>
+
+        <!-- Ringkasan -->
+        <div class="px-4 py-3 border-t border-slate-100 bg-slate-50 space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-600">Subtotal</span>
+            <span id="sum-subtotal" class="font-semibold">Rp 0</span>
+          </div>
+
+          <div class="flex items-center justify-between gap-3">
+            <label for="discount-input" class="text-slate-600 flex items-center gap-2">
+              Diskon
+              <span class="relative">
+                <input id="discount-input" type="number" min="0" max="100" step="any" inputmode="decimal" placeholder="0"
+                  class="w-20 h-10 pl-2 pr-7 rounded-lg border border-slate-200 bg-white text-right">
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
+              </span>
+            </label>
+            <span id="sum-discount" class="font-semibold text-red-600">- Rp 0</span>
+          </div>
+
+          <div class="flex items-center justify-between gap-3">
+            <label for="tax-input" class="text-slate-600 flex items-center gap-2">
+              Pajak
+              <span class="relative">
+                <input id="tax-input" type="number" min="0" max="100" step="any" inputmode="decimal" placeholder="0"
+                  class="w-20 h-10 pl-2 pr-7 rounded-lg border border-slate-200 bg-white text-right">
+                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
+              </span>
+            </label>
+            <span id="sum-tax" class="font-semibold">Rp 0</span>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-dashed border-slate-300">
+            <span class="font-bold text-base">Total Belanja</span>
+            <span id="sum-total" class="font-extrabold text-2xl text-brand-700">Rp 0</span>
+          </div>
+        </div>
+
+        <!-- Pembayaran -->
+        <div class="px-4 py-4 border-t border-slate-100 space-y-3">
+          <p class="font-bold text-sm text-slate-700">Metode Pembayaran</p>
+          <div class="grid grid-cols-2 gap-2" id="method-buttons">
+            <button type="button" data-method="tunai"
+              class="btn-press min-h-[52px] rounded-xl border-2 font-semibold flex items-center justify-center gap-2">
+              <i class="ph ph-money text-xl"></i> Tunai
+            </button>
+            <button type="button" data-method="qris"
+              class="btn-press min-h-[52px] rounded-xl border-2 font-semibold flex items-center justify-center gap-2">
+              <i class="ph ph-qr-code text-xl"></i> QRIS
+            </button>
+          </div>
+
+          <!-- Bagian Tunai -->
+          <div id="cash-section" class="space-y-3">
+            <div id="quick-cash" class="grid grid-cols-3 gap-2"></div>
+
+            <div>
+              <label for="cash-input" class="text-sm text-slate-600 block mb-1">Uang Diterima</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-400">Rp</span>
+                <input id="cash-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0"
+                  class="w-full h-14 pl-12 pr-4 rounded-xl border-2 border-slate-200 text-xl font-bold text-right focus:border-brand-500">
+              </div>
+            </div>
+
+            <div id="change-box" class="rounded-xl p-3 text-center bg-slate-100 text-slate-600" role="status" aria-live="polite"></div>
+          </div>
+
+          <!-- Bagian QRIS -->
+          <div id="qris-section" class="hidden rounded-xl border-2 border-dashed border-brand-200 bg-brand-50 p-4 text-center">
+            <div class="mx-auto w-32 h-32 bg-white rounded-xl border border-brand-200 flex items-center justify-center text-7xl text-brand-700">
+              <i class="ph ph-qr-code"></i>
+            </div>
+            <p class="mt-3 font-semibold text-brand-800">Scan QRIS untuk membayar</p>
+            <p class="text-sm text-brand-700">Nominal pas sesuai total belanja. Tekan <b>Proses</b> setelah pembayaran diterima.</p>
+          </div>
+
+          <button id="btn-process" type="button"
+            class="btn-press w-full min-h-[56px] rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-lg flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:text-slate-500">
+            <i class="ph ph-receipt text-2xl"></i> Proses Transaksi
+          </button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Tombol keranjang mengambang (khusus layar kecil) -->
+  <button id="fab-cart" type="button"
+    class="hidden btn-press lg:hidden fixed bottom-4 left-4 right-4 z-30 min-h-[56px] px-5 rounded-2xl bg-brand-600 text-white shadow-xl items-center justify-between font-bold">
+    <span class="flex items-center gap-2"><i class="ph ph-shopping-cart text-2xl"></i> <span id="fab-count">0 item</span></span>
+    <span id="fab-total">Rp 0</span>
+  </button>
+
+  <!-- ===================== MODAL STRUK ===================== -->
+  <div id="receipt-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/60 p-4 modal-backdrop" role="dialog" aria-modal="true" aria-label="Struk belanja">
+    <div class="receipt-dialog bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[92vh] modal-pop">
+      <div class="no-print flex items-center justify-between px-5 py-3 border-b border-slate-100">
+        <h2 class="font-bold flex items-center gap-2">
+          <i class="ph ph-check-circle text-brand-600 text-2xl"></i> Transaksi Berhasil
+        </h2>
+        <button type="button" data-close="receipt-modal" aria-label="Tutup"
+          class="btn-press w-10 h-10 rounded-lg hover:bg-slate-100 text-xl flex items-center justify-center"><i class="ph ph-x"></i></button>
+      </div>
+
+      <div class="receipt-scroll overflow-y-auto thin-scroll p-4 bg-slate-100">
+        <div id="receipt-print" class="receipt-paper"></div>
+      </div>
+
+      <div class="no-print grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border-t border-slate-100">
+        <button id="btn-print" type="button"
+          class="btn-press min-h-[52px] rounded-xl border-2 border-brand-600 text-brand-700 font-bold flex items-center justify-center gap-2 hover:bg-brand-50">
+          <i class="ph ph-printer text-xl"></i> Cetak / Simpan PDF
+        </button>
+        <button id="btn-new" type="button"
+          class="btn-press min-h-[52px] rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold flex items-center justify-center gap-2">
+          <i class="ph ph-plus-circle text-xl"></i> Transaksi Baru
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL RIWAYAT ===================== -->
+  <div id="history-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/60 p-4 modal-backdrop" role="dialog" aria-modal="true" aria-label="Riwayat transaksi">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] modal-pop">
+      <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+        <h2 class="font-bold flex items-center gap-2"><i class="ph ph-clock-counter-clockwise text-brand-600 text-2xl"></i> Riwayat Transaksi</h2>
+        <button type="button" data-close="history-modal" aria-label="Tutup"
+          class="btn-press w-10 h-10 rounded-lg hover:bg-slate-100 text-xl flex items-center justify-center"><i class="ph ph-x"></i></button>
+      </div>
+
+      <div id="history-summary" class="grid grid-cols-2 gap-3 p-4 pb-0"></div>
+      <div id="history-list" class="flex-1 overflow-y-auto thin-scroll p-4 space-y-2"></div>
+
+      <div class="grid grid-cols-2 gap-3 p-4 border-t border-slate-100">
+        <button id="btn-clear-history" type="button"
+          class="btn-press min-h-[48px] rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50">
+          Hapus Riwayat
+        </button>
+        <button id="btn-reset-data" type="button"
+          class="btn-press min-h-[48px] rounded-xl border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50">
+          Reset Stok &amp; Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wadah notifikasi (toast) -->
+  <div id="toast-wrap" class="fixed top-20 right-4 left-4 sm:left-auto sm:w-80 z-[60] space-y-2 pointer-events-none"></div>
+
+  <!-- Urutan penting: data.js dulu, baru app.js -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
